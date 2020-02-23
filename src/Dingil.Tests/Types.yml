@@ -11,7 +11,7 @@ Product:
     Name: System.String
     Tags: System.Collections.Generic.List`1[System.String]
     Vendors: System.Collections.Generic.Dictionary`2[System.String,System.String[]]
-    # PriceHistory1: System.Collections.Generic.LinkedList`1[[System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
+    PriceHistory1: System.Collections.Generic.LinkedList`1[System.Decimal], System.Collections
     PriceHistory2: System.Collections.Generic.IReadOnlyCollection`1[[System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]
     SalesPriceHistory: System.Collections.Generic.IReadOnlyCollection`1[[System.Decimal]]
     Price: System.Decimal
