@@ -1,0 +1,9 @@
+﻿Project:
+    Id: System.Int32
+    Name: System.String
+
+Todo:
+    Id: System.Int32
+    Title: System.String
+    Project: $Project
+

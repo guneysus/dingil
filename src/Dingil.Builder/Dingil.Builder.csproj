@@ -7,8 +7,8 @@
     <ProjectGuid>{93A59FB5-5788-43C6-987A-CE8123796ACB}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Dingil.Builder</RootNamespace>
-    <AssemblyName>Dingil.Builder</AssemblyName>
+    <RootNamespace>Dingil</RootNamespace>
+    <AssemblyName>Dingil</AssemblyName>
     <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -47,12 +47,6 @@
   <ItemGroup>
     <Compile Include="DingilBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Dingil\Dingil.Core.csproj">
-      <Project>{124D5488-8C93-40B1-A3F6-C157A2EB5676}</Project>
-      <Name>Dingil.Core</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

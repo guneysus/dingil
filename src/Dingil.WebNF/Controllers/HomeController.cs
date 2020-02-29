@@ -19,28 +19,8 @@ namespace Dingil.WebNF.Controllers
         [HttpPost]
         public ActionResult Index(string body)
         {
-            var typeInformations = YamlParser.DingilYamlParser.Parse(body);
-            var (assemblyBuilder, moduleBuilder, types) = Builder.DingilBuilder.BuildModule(
-                AppDomain.CurrentDomain,
-                typeInformations,
-                AssemblyBuilderAccess.Run,
-                "MyDynamicAssembly",
-                true);
-
-
-            Type type = types.Single(x => x.Name == "Employee");
-            var employee = Activator.CreateInstance(type);
-            FieldInfo birthdate = type.GetField("Birthdate");
-            FieldInfo age = type.GetField("Age");
-            FieldInfo firstname = type.GetField("Firstname");
-            FieldInfo lastname = type.GetField("Lastname");
-
-            birthdate.SetValue(employee, new DateTime(2000, 1, 31));
-            age.SetValue(employee, 30);
-            firstname.SetValue(employee, "Ahmed");
-            lastname.SetValue(employee, "Güneysu");
-
-            return Json(employee);
+            var typeInformations = Parsers.DingilYamlParser.Parse(body);
+            throw new NotImplementedException();
         }
         public ActionResult About()
         {

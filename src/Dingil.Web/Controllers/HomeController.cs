@@ -18,7 +18,7 @@ namespace Dingil.Web.Controllers
         [HttpPost]
         public IActionResult Index(string body)
         {
-            var types = YamlParser.DingilYamlParser.Parse(body);
+            var types = Parsers.DingilYamlParser.Parse(body);
             //var (_, _, _) = Builder.DingilBuilder.BuildModule(AppDomain.CurrentDomain, types, System.Reflection.Emit.AssemblyBuilderAccess.Run, "MyDynamicAssembly", true);
             
             return Ok(types);

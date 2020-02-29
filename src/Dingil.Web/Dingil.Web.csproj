@@ -15,7 +15,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Dingil.Builder\Dingil.Builder.csproj" />
     <ProjectReference Include="..\Dingil.YamlParser\Dingil.YamlParser.csproj" />
-    <ProjectReference Include="..\Dingil\Dingil.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

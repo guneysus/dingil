@@ -205,10 +205,6 @@
       <Project>{ed3d7278-93ed-4e5a-b66c-6991c9b9cadb}</Project>
       <Name>Dingil.YamlParser</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Dingil\Dingil.Core.csproj">
-      <Project>{124d5488-8c93-40b1-a3f6-c157a2eb5676}</Project>
-      <Name>Dingil.Core</Name>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

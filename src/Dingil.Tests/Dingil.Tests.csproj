@@ -47,10 +47,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DingilTests.cs" />
+    <Compile Include="ComplextTypesTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Models.yml">
+      <LastGenOutput>Models1.txt</LastGenOutput>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Types.yml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -64,14 +68,16 @@
       <Project>{ed3d7278-93ed-4e5a-b66c-6991c9b9cadb}</Project>
       <Name>Dingil.YamlParser</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Dingil\Dingil.Core.csproj">
-      <Project>{124d5488-8c93-40b1-a3f6-c157a2eb5676}</Project>
-      <Name>Dingil.Core</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="functional.net">
+      <Version>0.0.1</Version>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="underscore.net">
+      <Version>0.5.0</Version>
     </PackageReference>
     <PackageReference Include="xunit">
       <Version>2.4.1</Version>
@@ -84,6 +90,9 @@
     <PackageReference Include="YamlDotNet">
       <Version>8.1.0</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
