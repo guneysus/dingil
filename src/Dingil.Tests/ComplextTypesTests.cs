@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Emit;
 using Xunit;
+using static functional.net.Ext;
 
 namespace Dingil.Tests
 {
@@ -13,58 +14,190 @@ namespace Dingil.Tests
         [Fact]
         public void Primitive_Types()
         {
-            Assert.Equal(typeof(string), DingilBuilder.GetType("System.String"));
+            Assert.Equal(typeof(string), DingilBuilder.MapType("System.String"));
         }
 
         [Fact]
-        public void Simple_Class()
+        public void Simple_Class_Definition()
         {
+            var builder = DingilBuilder.New(AppDomain.CurrentDomain)
+                .SetAssemblyName(assemblyName: "Models")
+                .CreateAssembly()
+                .CreateModule(emitSymbolInfo: true);
+
+            builder.InitializeClass(name: "Student");
+
             var studentTypeInfo = Ext.dict<string, string>(
                 ("Id", "System.Int32"),
                 ("Name", "System.String"),
                 ("Birthdate", "System.DateTime")
             );
 
-            // Type studentType = default(Type); // Dingil.Core.Dingil.GetType("Student", studentTypeInfo);
-
-            AssemblyBuilder studentAssemblyBuilder = DingilBuilder.AssemblyBuilderFactory(
-                AppDomain.CurrentDomain,
-                "Student",
-                new Version(),
-                AssemblyBuilderAccess.Save);
-
-            #region student
-            ModuleBuilder moduleBuilder = DingilBuilder.ModuleBuilderFactory(studentAssemblyBuilder,
-        "Student.dll",
-        emitSymbolInfo: true);
-
-            TypeBuilder typeBuilder = DingilBuilder.TypeBuilderFactory(moduleBuilder, "Student");
-
-
-            foreach (var kv in studentTypeInfo)
+            studentTypeInfo.ToList().ForEach(kv =>
             {
-                var name = kv.Key;
-                var typeName = kv.Value;
-                FieldBuilder t = DingilBuilder.AddField(typeBuilder, name, DingilBuilder.GetType(typeName));
-            }
+                builder.AddField("Student", kv.Key, kv.Value);
+            });
 
-            //_ = DingilBuilder.AddProperty(typeBuilder, "Id", Dingil.Core.Dingil.GetType("System.Int32"));
+            builder.CreateClass("Student");
 
-            var studentType = typeBuilder.CreateType();
-            #endregion
+            Type studentType = builder.GetClass("Student"); // typeBuilder.CreateType();
 
-            studentAssemblyBuilder.Save(@"Student.dll");
+            Assert.NotNull(studentType.GetField("Id"));
+            Assert.NotNull(studentType.GetField("Name"));
+            Assert.NotNull(studentType.GetField("Birthdate"));
+        }
+
+        [Fact]
+        public void Easy_Class_Definition()
+        {
+            var builder = DingilBuilder.New(AppDomain.CurrentDomain)
+                .SetAssemblyName(assemblyName: "Models")
+                .CreateAssembly()
+                .CreateModule(emitSymbolInfo: true);
+
+            var properties = dict(
+                ("Id", "System.Int32"),
+                ("Name", "System.String"),
+                ("Birthdate", "System.DateTime")
+            );
+
+            builder.InitializeAndCreateClass("Student", properties);
+
+            Type studentType = builder.GetClass("Student"); // typeBuilder.CreateType();
+
+            Assert.NotNull(studentType.GetField("Id"));
+            Assert.NotNull(studentType.GetField("Name"));
+            Assert.NotNull(studentType.GetField("Birthdate"));
+        }
+
+        [Fact]
+        public void Easy_Class_Definition_With_Types()
+        {
+            var builder = DingilBuilder.New(AppDomain.CurrentDomain)
+                .SetAssemblyName(assemblyName: "Models")
+                .CreateAssembly()
+                .CreateModule(emitSymbolInfo: true);
+
+            var properties = dict(
+                    ("Id", typeof(int)),
+                    ("Name", typeof(string)),
+                    ("Birthdate", typeof(DateTime)
+                )
+            );
+
+            builder.InitializeAndCreateClass("Student", properties);
+
+            Type studentType = builder.GetClass("Student"); // typeBuilder.CreateType();
+
+            Assert.NotNull(studentType.GetField("Id"));
+            Assert.NotNull(studentType.GetField("Name"));
+            Assert.NotNull(studentType.GetField("Birthdate"));
+        }
+
+        [Fact]
+        public void Bulk_Class_Definition()
+        {
+            var builder = DingilBuilder.New(AppDomain.CurrentDomain)
+                .SetAssemblyName(assemblyName: "Models")
+                .CreateAssembly()
+                .CreateModule(emitSymbolInfo: true);
+
+            var properties = Ext.dict<string, string>(
+                ("Id", "System.Int32"),
+                ("Name", "System.String"),
+                ("Birthdate", "System.DateTime")
+            );
+
+            var classDefinitions = Ext.dict<string, Dictionary<string, string>>(
+                ("Student", properties),
+                ("Employee", properties)
+            );
+
+            builder.InitializeAndCreateClasses(classDefinitions);
+
+            Type studentType = builder.GetClass("Student");
+
+            Assert.NotNull(studentType.GetField("Id"));
+            Assert.NotNull(studentType.GetField("Name"));
+            Assert.NotNull(studentType.GetField("Birthdate"));
+
+            Type employeeType = builder.GetClass("Employee");
+
+            Assert.NotNull(employeeType.GetField("Id"));
+            Assert.NotNull(employeeType.GetField("Name"));
+            Assert.NotNull(employeeType.GetField("Birthdate"));
+        }
+
+        [Fact]
+        public void Bulk_Class_Definition_With_Types()
+        {
+            var builder = DingilBuilder.New(AppDomain.CurrentDomain)
+                .SetAssemblyName(assemblyName: "Models")
+                .SetAssemblyAccess(AssemblyBuilderAccess.Save)
+                .CreateAssembly()
+                .CreateModule(emitSymbolInfo: true);
+
+            var properties = dict(
+                    ("Id", typeof(int)),
+                    ("Name", typeof(string)),
+                    ("Birthdate", typeof(DateTime)
+                )
+            );
+
+            var classDefinitions = Ext.dict<string, Dictionary<string, Type>>(
+                ("Student", properties),
+                ("Employee", properties)
+            );
+
+            builder.InitializeAndCreateClasses(classDefinitions);
+
+            Type studentType = builder.GetClass("Student");
+
+            Assert.NotNull(studentType.GetField("Id"));
+            Assert.NotNull(studentType.GetField("Name"));
+            Assert.NotNull(studentType.GetField("Birthdate"));
+
+            Type employeeType = builder.GetClass("Employee");
+
+            Assert.NotNull(employeeType.GetField("Id"));
+            Assert.NotNull(employeeType.GetField("Name"));
+            Assert.NotNull(employeeType.GetField("Birthdate"));
+
+            builder.SaveAssembly();
+        }
+
+        [Fact]
+        public void Fluent_API_Tests()
+        {
+            var builder = DingilBuilder.New(AppDomain.CurrentDomain)
+                .SetAssemblyName(assemblyName: "Models")
+                .SetAssemblyAccess(access: AssemblyBuilderAccess.RunAndSave)
+                .SetAssemblyVersion(version: new Version("1.0.0"))
+                .CreateAssembly()
+                .CreateModule(emitSymbolInfo: true)
+
+                .InitializeClass(name: "Student")
+                .InitializeClass(name: "Class")
+
+                .AddField(typeName: "Student", fieldName: "Id", fieldType: typeof(int))
+                .AddField(typeName: "Student", fieldName: "Name", fieldType: "System.String")
+                .AddField(typeName: "Student", fieldName: "Birthdate", fieldType: "System.DateTime")
+
+                .AddField(typeName: "Class", fieldName: "Id", fieldType: typeof(int))
+                .CreateClass(name: "Class")
+
+                .AddReferenceField(typeName: "Student", fieldName: "Class", fieldType: "Class")
+
+                .CreateClass(name: "Student")
+                .SaveAssembly()
+                ;
+
+            var studentType = builder.GetClass("Student");
 
             Assert.NotNull(studentType.GetField("Id"));
             Assert.NotNull(studentType.GetField("Name"));
             Assert.NotNull(studentType.GetField("Birthdate"));
         }
     }
-
-}
-
-
-public class PocoBuilder
-{
 
 }
