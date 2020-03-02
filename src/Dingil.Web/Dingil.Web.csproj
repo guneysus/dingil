@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Dingil.Builder\Dingil.csproj" />
     <ProjectReference Include="..\Dingil.YamlParser\Dingil.YamlParser.csproj" />
   </ItemGroup>
 

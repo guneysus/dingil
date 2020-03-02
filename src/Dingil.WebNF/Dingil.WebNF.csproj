@@ -197,10 +197,6 @@
     <Content Include="Scripts\jquery-3.3.1.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dingil.Builder\Dingil.csproj">
-      <Project>{93a59fb5-5788-43c6-987a-ce8123796acb}</Project>
-      <Name>Dingil</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Dingil.YamlParser\Dingil.YamlParser.csproj">
       <Project>{ed3d7278-93ed-4e5a-b66c-6991c9b9cadb}</Project>
       <Name>Dingil.YamlParser</Name>
