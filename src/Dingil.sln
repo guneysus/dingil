@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dingil.YamlParser", "Dingil.YamlParser\Dingil.YamlParser.csproj", "{ED3D7278-93ED-4E5A-B66C-6991C9B9CADB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dingil.Builder", "Dingil.Builder\Dingil.Builder.csproj", "{93A59FB5-5788-43C6-987A-CE8123796ACB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dingil", "Dingil.Builder\Dingil.csproj", "{93A59FB5-5788-43C6-987A-CE8123796ACB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dingil.Tests", "Dingil.Tests\Dingil.Tests.csproj", "{2FCF7D07-B0F0-407C-A28E-9A6B0EBDAE63}"
 EndProject

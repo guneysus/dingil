@@ -23,7 +23,8 @@ namespace Dingil.Tests
             var builder = DingilBuilder.New(AppDomain.CurrentDomain)
                 .SetAssemblyName(assemblyName: "Models")
                 .CreateAssembly()
-                .CreateModule(emitSymbolInfo: true);
+                .CreateModule(emitSymbolInfo: true)
+                ;
 
             builder.InitializeClass(name: "Student");
 
@@ -177,6 +178,7 @@ namespace Dingil.Tests
                 .CreateModule(emitSymbolInfo: true)
 
                 .InitializeClass(name: "Student")
+
                 .InitializeClass(name: "Class")
 
                 .AddField(typeName: "Student", fieldName: "Id", fieldType: typeof(int))
