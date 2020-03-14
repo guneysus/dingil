@@ -57,22 +57,19 @@ namespace Dingoz
 
             foreach (var (name, @class) in dingil.GetClasses())
             {
-
-                var type = typeof(ApiController<>).MakeGenericType(@class);
-
-                var instance = Activator.CreateInstance(type, new object[] { db });
-                var postDelegate = typeof(Func<,,>).MakeGenericType(new Type[] { typeof(HttpContext), @class, typeof(Task) });
-                var requestDelegateType = typeof(Func<,>).MakeGenericType(new Type[] { typeof(HttpContext), typeof(Task) });
+                var instance = Activator.CreateInstance(typeof(ApiController<>).MakeGenericType(@class), new object[] { db });
+                //var requestDelegateType = typeof(Func<,>).MakeGenericType(new Type[] { typeof(HttpContext), typeof(Task) });
+                var reqDel = typeof(Func<HttpContext, Task>);
 
                 string resourceUrl = $"/api/{@class.Name}";
 
-                app.MapGet(resourceUrl + "/{id}", async (context) => await ((Func<HttpContext, int, Task>)Delegate.CreateDelegate(type: typeof(Func<HttpContext, int, Task>), target: instance, method: "get", ignoreCase: true)).Invoke(context, context.Request.RouteValues.Get<int>("id").Value));
+                app.MapGet(resourceUrl + "/{id}", async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: reqDel, target: instance, method: "GetById", ignoreCase: true)).Invoke(context));
 
-                app.MapGet(resourceUrl, async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: typeof(Func<HttpContext, Task>), target: instance, method: "get", ignoreCase: true)).Invoke(context));
+                app.MapGet(resourceUrl, async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: reqDel, target: instance, method: "GetAll", ignoreCase: true)).Invoke(context));
 
-                app.MapPost(resourceUrl, async (context) => await (Task)(Delegate.CreateDelegate(type: requestDelegateType, target: instance, method: "post", ignoreCase: true)).DynamicInvoke(context));
+                app.MapPost(resourceUrl, async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: reqDel, target: instance, method: "Post", ignoreCase: true)).Invoke(context));
 
-                app.MapPut(resourceUrl + "/{id}", async (context) => await (Task)(Delegate.CreateDelegate(type: requestDelegateType, target: instance, method: "put", ignoreCase: true)).DynamicInvoke(context));
+                app.MapPut(resourceUrl + "/{id}", async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: reqDel, target: instance, method: "Put", ignoreCase: true)).Invoke(context));
             }
 
             await app.RunAsync();
@@ -93,7 +90,7 @@ namespace Dingoz.Service
             this.collection = db.GetCollection<T>();
         }
 
-        public async Task Get(HttpContext context)
+        public async Task GetAll(HttpContext context)
         {
             context.Response.StatusCode = (int)HttpStatusCode.OK;
             var items = collection.FindAll();
@@ -105,8 +102,10 @@ namespace Dingoz.Service
             });
         }
 
-        public async Task Get(HttpContext context, int id)
+        public async Task GetById(HttpContext context)
         {
+            (int id, bool ok) = context.Request.RouteValues.Get<int>("id");
+
             var response = collection.FindById(id);
             if (response == null)
             {
