@@ -1,4 +1,84 @@
-﻿namespace Dingil
+﻿using CommandLine;
+using Flurl.Http;
+using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
+using System.Threading.Tasks;
+
+namespace Dingoz
+{
+    internal static class Program
+    {
+        static Options Options;
+
+        public static void Main(string[] args)
+        {
+            Parser.Default.ParseArguments<Options>(args)
+                   .WithParsed(options =>
+                   {
+                       Options = options;
+                   });
+
+            System.Threading.Tasks.Task<string> task = Options.Url.GetStringAsync();
+
+            Task.Run(async () =>
+            {
+                var body = await Options.Url.GetStringAsync();
+                var typeInformations = Dingil.Parsers.DingilYamlParser.ParseBasic(body);
+
+                var dingil = Dingil.DingilBuilder.New()
+                    .SetAssemblyAccess(AssemblyBuilderAccess.RunAndCollect)
+                    .SetAssemblyName(Guid.NewGuid().ToString())
+                    .SetAssemblyVersion(new Version(0, 0, 0))
+                    .CreateAssembly()
+                    .CreateModule()
+                    //.InitializeAndCreateClass("EmptyClass", new Dictionary<string, string>())
+                    .InitializeAndCreateClasses(typeInformations)
+                ;
+
+                var classes = dingil.GetClasses();
+
+
+
+            }).Wait();
+
+            Console.WriteLine("Hello World!");
+        }
+    }
+}
+
+namespace Dingoz.Controllers
+{
+
+}
+
+
+namespace Dingil.Parsers
+{
+    using System.Collections.Generic;
+    using YamlDotNet.Serialization;
+
+
+    public static class DingilYamlParser
+    {
+        static IDeserializer Deserializer =  new DeserializerBuilder().Build();
+        public static Dictionary<string, Dictionary<string, string>> ParseBasic(string content)
+        {
+            var result = Deserializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(content);
+            return result;
+        }
+
+        public static T ParseRaw<T>(string content)
+        {
+            var result = Deserializer.Deserialize<T>(content);
+            return result;
+        }
+    }
+
+}
+
+
+namespace Dingil
 {
 
     using System;
@@ -12,7 +92,9 @@
 
         #region Props
 
+        [Obsolete("", true)]
         private readonly AppDomain appDomain;
+
         private string assemblyName;
         private Version assemblyVersion = new Version();
         private AssemblyBuilderAccess assemblyAccess = AssemblyBuilderAccess.Run;
@@ -25,15 +107,26 @@
 
         #region Fluent API Region
 
+        [Obsolete("Deprecated", true)]
         protected DingilBuilder(AppDomain appDomain)
         {
             this.appDomain = appDomain;
         }
 
+        protected DingilBuilder()
+        {
+        }
+
         #region IAssemblyBuilder
+        [Obsolete("Deprecated", true)]
         public static IAssemblyBuilder New(AppDomain appDomain)
         {
             return new DingilBuilder(appDomain);
+        }
+
+        public static IAssemblyBuilder New()
+        {
+            return new DingilBuilder();
         }
 
         public IAssemblyBuilder SetAssemblyName(string assemblyName)
@@ -58,12 +151,13 @@
         #region IModuleBuilder
         public IModuleBuilder CreateAssembly()
         {
-            this.assemblyBuilder = appDomain.DefineDynamicAssembly(new AssemblyName()
+            var assemblyName = new AssemblyName()
             {
-                Name = assemblyName,
+                Name = this.assemblyName,
                 Version = assemblyVersion
-            }, assemblyAccess);
+            };
 
+            this.assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, assemblyAccess);
             return this;
         }
         #endregion
@@ -161,9 +255,9 @@
             this.InitializeClass(name);
 
             properties.ToList().ForEach(kv =>
-             {
-                 AddField(typeName: name, fieldName: kv.Key, fieldType: kv.Value);
-             });
+            {
+                AddField(typeName: name, fieldName: kv.Key, fieldType: kv.Value);
+            });
 
             types.Add(name, typeBuilders[name].CreateType());
             return this;
@@ -193,10 +287,10 @@
 
                 props.ToList().ForEach(p =>
                 {
-                    string fieldName = p.Key;
-                    var fieldType = p.Value;
+                    string propName = p.Key;
+                    var propType = p.Value;
 
-                    AddField(typeName: className, fieldName: fieldName, fieldType: fieldType);
+                    AddProp(typeName: className, propName: propName, propType: propType);
                 });
 
                 Type type = typeBuilders[className].CreateType();
@@ -229,9 +323,10 @@
             return this;
         }
 
+        [Obsolete("Deprecated", true)]
         public IDingilBuilder SaveAssembly()
         {
-            assemblyBuilder.Save(this.assemblyName);
+            // assemblyBuilder.Save(this.assemblyName);
             return this;
         }
 
@@ -241,10 +336,18 @@
             return this;
         }
 
-        public IDingilBuilder CreateModule(bool emitSymbolInfo = false)
+        [Obsolete("", true)]
+        public IDingilBuilder CreateModule( bool emitSymbolInfo)
         {
             if (assemblyName.Length > 260) throw new ArgumentOutOfRangeException(nameof(assemblyName));
-            this.moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName, emitSymbolInfo);
+            this.moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
+            return this;
+        }
+
+        public IDingilBuilder CreateModule()
+        {
+            if (assemblyName.Length > 260) throw new ArgumentOutOfRangeException(nameof(assemblyName));
+            this.moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
             return this;
         }
 
@@ -287,7 +390,9 @@
 
     public interface IModuleBuilder
     {
-        IDingilBuilder CreateModule(bool emitSymbolInfo = false);
+        [Obsolete("Deprecated", true)]
+        IDingilBuilder CreateModule(bool emitSymbolInfo);
+        IDingilBuilder CreateModule();
     }
 
     public interface IClassBuilder : IFieldBuilder
@@ -313,6 +418,8 @@
         IDingilBuilder InitializeAndCreateClass(string name, Dictionary<string, Type> properties);
         IDingilBuilder InitializeAndCreateClasses(Dictionary<string, Dictionary<string, string>> typeDefinitions);
         IDingilBuilder InitializeAndCreateClasses(Dictionary<string, Dictionary<string, Type>> typeDefinitions);
+        
+        [Obsolete("Deprecated", true)]
         IDingilBuilder SaveAssembly();
 
         Type GetClass(string name);

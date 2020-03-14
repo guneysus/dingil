@@ -39,6 +39,8 @@ namespace Dingil.Tests
                 builder.AddField("Student", kv.Key, kv.Value);
             });
 
+            builder.AddProp("Student", "Age", typeof(int));
+
             builder.CreateClass("Student");
 
             Type studentType = builder.GetClass("Student"); // typeBuilder.CreateType();

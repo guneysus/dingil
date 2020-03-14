@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Web;
 using System.Web.Mvc;
+using Dingil;
 
 namespace Dingil.WebNF.Controllers
 {
@@ -19,7 +20,16 @@ namespace Dingil.WebNF.Controllers
         [HttpPost]
         public ActionResult Index(string body)
         {
-            var typeInformations = Parsers.DingilYamlParser.Parse(body);
+            var typeInformations = Parsers.DingilYamlParser.ParseRaw<Dictionary<string, Dictionary<string, string>>>(body);
+            var builder = DingilBuilder.New(AppDomain.CurrentDomain)
+                .SetAssemblyName(assemblyName: "Models")
+                //.SetAssemblyAccess(AssemblyBuilderAccess.Run)
+                .CreateAssembly()
+                .CreateModule(emitSymbolInfo: true);
+
+            builder.InitializeAndCreateClasses(typeInformations);
+
+            var types = builder.GetClasses();
             throw new NotImplementedException();
         }
         public ActionResult About()
