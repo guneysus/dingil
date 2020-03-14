@@ -28,9 +28,20 @@ namespace Dingoz
                    {
                        Options = options;
 
-                       //db = new LiteDatabase(options.DbPath.FullName);
-                       db = new LiteDatabase(new MemoryStream());
+                       if (options.InMemory)
+                       {
+                           db = new LiteDatabase(new MemoryStream());
+                       }
+                       else
+                       {
+                           db = new LiteDatabase(options.DbPath.FullName);
+                       }
+
                    });
+
+
+            if (Options?.Url == null)
+                return;
 
             System.Threading.Tasks.Task<string> task = Options.Url.GetStringAsync();
 
@@ -144,8 +155,11 @@ namespace Dingoz.Service
 
         public async Task Put(HttpContext context)
         {
+            (int id, bool ok) = context.Request.RouteValues.Get<int>("id");
+
             var entity = await System.Text.Json.JsonSerializer.DeserializeAsync<T>(context.Request.BodyReader.AsStream());
-            var result = collection.Update(entity);
+
+            var result = collection.Update(id, entity);
 
             if (!result)
             {
@@ -199,7 +213,6 @@ namespace Dingil.Parsers
     }
 
 }
-
 
 namespace Dingil
 {

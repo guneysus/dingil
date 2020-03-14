@@ -2,7 +2,8 @@
   "profiles": {
     "Dingoz": {
       "commandName": "Project",
-      "commandLineArgs": "--url=https://gist.github.com/guneysus/e20508dcf3e0bf3bd8ebfbbeec09b912/raw/catalog.yml --db=todo.litedb"
+      "commandLineArgs": "--url=https://gist.github.com/guneysus/e20508dcf3e0bf3bd8ebfbbeec09b912/raw/catalog.yml --db=todo.litedb",
+      "workingDirectory": "%TMP%"
     }
   }
 }

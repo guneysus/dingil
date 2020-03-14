@@ -1,0 +1,1 @@
+dotnet tool update -g Dingoz --version 0.0.0 --add-source .\nupkg
