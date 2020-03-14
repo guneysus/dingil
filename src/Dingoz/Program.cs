@@ -47,7 +47,6 @@ namespace Dingoz
                     .SetAssemblyVersion(new Version(0, 0, 0))
                     .CreateAssembly()
                     .CreateModule()
-                    //.InitializeAndCreateClass("EmptyClass", new Dictionary<string, string>())
                     .InitializeAndCreateClasses(typeInformations)
                 ;
 
@@ -55,21 +54,21 @@ namespace Dingoz
 
             var app = WebApplication.Create(args);
 
+            Type requestDelegateType = typeof(RequestDelegate);
+
             foreach (var (name, @class) in dingil.GetClasses())
             {
                 var instance = Activator.CreateInstance(typeof(ApiController<>).MakeGenericType(@class), new object[] { db });
-                //var requestDelegateType = typeof(Func<,>).MakeGenericType(new Type[] { typeof(HttpContext), typeof(Task) });
-                var reqDel = typeof(Func<HttpContext, Task>);
 
-                string resourceUrl = $"/api/{@class.Name}";
+                string uri = $"/api/{@class.Name}";
 
-                app.MapGet(resourceUrl + "/{id}", async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: reqDel, target: instance, method: "GetById", ignoreCase: true)).Invoke(context));
+                app.MapGet(uri + "/{id}", (RequestDelegate)Delegate.CreateDelegate(requestDelegateType, instance, "GetById"));
 
-                app.MapGet(resourceUrl, async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: reqDel, target: instance, method: "GetAll", ignoreCase: true)).Invoke(context));
+                app.MapGet(uri, (RequestDelegate)Delegate.CreateDelegate(requestDelegateType, instance, "GetAll"));
 
-                app.MapPost(resourceUrl, async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: reqDel, target: instance, method: "Post", ignoreCase: true)).Invoke(context));
+                app.MapPost(uri, (RequestDelegate)Delegate.CreateDelegate(requestDelegateType, instance, "Post"));
 
-                app.MapPut(resourceUrl + "/{id}", async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: reqDel, target: instance, method: "Put", ignoreCase: true)).Invoke(context));
+                app.MapPut(uri + "/{id}", (RequestDelegate)Delegate.CreateDelegate(requestDelegateType, instance, "Put"));
             }
 
             await app.RunAsync();
