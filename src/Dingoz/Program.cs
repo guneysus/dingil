@@ -61,7 +61,8 @@ namespace Dingoz
                 var type = typeof(ApiController<>).MakeGenericType(@class);
 
                 var instance = Activator.CreateInstance(type, new object[] { db });
-                var requestDelegateType = typeof(Func<,,>).MakeGenericType(new Type[] { typeof(HttpContext), @class, typeof(Task) });
+                var postDelegate = typeof(Func<,,>).MakeGenericType(new Type[] { typeof(HttpContext), @class, typeof(Task) });
+                var requestDelegateType = typeof(Func<,>).MakeGenericType(new Type[] { typeof(HttpContext), typeof(Task) });
 
                 string resourceUrl = $"/api/{@class.Name}";
 
@@ -69,9 +70,9 @@ namespace Dingoz
 
                 app.MapGet(resourceUrl, async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: typeof(Func<HttpContext, Task>), target: instance, method: "get", ignoreCase: true)).Invoke(context));
 
-                app.MapPost(resourceUrl, async (context) => await (Task)(Delegate.CreateDelegate(type: requestDelegateType, target: instance, method: "post", ignoreCase: true)).DynamicInvoke(context, await System.Text.Json.JsonSerializer.DeserializeAsync(context.Request.BodyReader.AsStream(), @class)));
+                app.MapPost(resourceUrl, async (context) => await (Task)(Delegate.CreateDelegate(type: requestDelegateType, target: instance, method: "post", ignoreCase: true)).DynamicInvoke(context));
 
-                app.MapPut(resourceUrl, async (context) => await (Task)(Delegate.CreateDelegate(type: requestDelegateType, target: instance, method: "put", ignoreCase: true)).DynamicInvoke(context, await System.Text.Json.JsonSerializer.DeserializeAsync(context.Request.BodyReader.AsStream(), @class)));
+                app.MapPut(resourceUrl + "/{id}", async (context) => await (Task)(Delegate.CreateDelegate(type: requestDelegateType, target: instance, method: "put", ignoreCase: true)).DynamicInvoke(context));
             }
 
             await app.RunAsync();
@@ -129,8 +130,10 @@ namespace Dingoz.Service
 
         }
 
-        public async Task Post(HttpContext context, T entity)
+        public async Task Post(HttpContext context)
         {
+            var entity = await System.Text.Json.JsonSerializer.DeserializeAsync<T>(context.Request.BodyReader.AsStream());
+
             var result = collection.Insert(entity);
 
             await context.Response.WriteJsonAsync(new
@@ -141,14 +144,29 @@ namespace Dingoz.Service
 
         }
 
-        public async Task Put(HttpContext context, T entity)
+        public async Task Put(HttpContext context)
         {
-            var id = collection.Update(entity);
-            var response = collection.FindById(id);
+            var entity = await System.Text.Json.JsonSerializer.DeserializeAsync<T>(context.Request.BodyReader.AsStream());
+            var result = collection.Update(entity);
+
+            if (!result)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+
+                await context.Response.WriteJsonAsync(new
+                {
+                    result = result,
+                    errors = new string[] { }
+                });
+
+                return;
+            }
+
+            context.Response.StatusCode = (int)HttpStatusCode.OK;
 
             await context.Response.WriteJsonAsync(new
             {
-                items = new object[] { response },
+                result = result,
                 errors = new string[] { }
             });
         }
