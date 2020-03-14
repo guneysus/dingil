@@ -4,29 +4,44 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Dingil;
+using LiteDB;
+using System.IO;
+using Dingoz.Service;
+using System.Net;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace Dingoz
 {
     internal static class Program
     {
         static Options Options;
+        static LiteDatabase db;
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             Parser.Default.ParseArguments<Options>(args)
                    .WithParsed(options =>
                    {
                        Options = options;
+
+                       //db = new LiteDatabase(options.DbPath.FullName);
+                       db = new LiteDatabase(new MemoryStream());
                    });
 
             System.Threading.Tasks.Task<string> task = Options.Url.GetStringAsync();
+
+            IDingilBuilder dingil = default(IDingilBuilder);
 
             Task.Run(async () =>
             {
                 var body = await Options.Url.GetStringAsync();
                 var typeInformations = Dingil.Parsers.DingilYamlParser.ParseBasic(body);
 
-                var dingil = Dingil.DingilBuilder.New()
+                dingil = Dingil.DingilBuilder.New()
                     .SetAssemblyAccess(AssemblyBuilderAccess.RunAndCollect)
                     .SetAssemblyName(Guid.NewGuid().ToString())
                     .SetAssemblyVersion(new Version(0, 0, 0))
@@ -36,19 +51,111 @@ namespace Dingoz
                     .InitializeAndCreateClasses(typeInformations)
                 ;
 
-                var classes = dingil.GetClasses();
-
-
-
             }).Wait();
 
-            Console.WriteLine("Hello World!");
+            var app = WebApplication.Create(args);
+
+            foreach (var (name, @class) in dingil.GetClasses())
+            {
+
+                var type = typeof(ApiController<>).MakeGenericType(@class);
+
+                var instance = Activator.CreateInstance(type, new object[] { db });
+                var requestDelegateType = typeof(Func<,,>).MakeGenericType(new Type[] { typeof(HttpContext), @class, typeof(Task) });
+
+                string resourceUrl = $"/api/{@class.Name}";
+
+                app.MapGet(resourceUrl + "/{id}", async (context) => await ((Func<HttpContext, int, Task>)Delegate.CreateDelegate(type: typeof(Func<HttpContext, int, Task>), target: instance, method: "get", ignoreCase: true)).Invoke(context, context.Request.RouteValues.Get<int>("id").Value));
+
+                app.MapGet(resourceUrl, async (context) => await ((Func<HttpContext, Task>)Delegate.CreateDelegate(type: typeof(Func<HttpContext, Task>), target: instance, method: "get", ignoreCase: true)).Invoke(context));
+
+                app.MapPost(resourceUrl, async (context) => await (Task)(Delegate.CreateDelegate(type: requestDelegateType, target: instance, method: "post", ignoreCase: true)).DynamicInvoke(context, await System.Text.Json.JsonSerializer.DeserializeAsync(context.Request.BodyReader.AsStream(), @class)));
+
+                app.MapPut(resourceUrl, async (context) => await (Task)(Delegate.CreateDelegate(type: requestDelegateType, target: instance, method: "put", ignoreCase: true)).DynamicInvoke(context, await System.Text.Json.JsonSerializer.DeserializeAsync(context.Request.BodyReader.AsStream(), @class)));
+            }
+
+            await app.RunAsync();
         }
     }
 }
 
-namespace Dingoz.Controllers
+namespace Dingoz.Service
 {
+    public class ApiController<T>
+    {
+        private readonly LiteDatabase db;
+        private readonly ILiteCollection<T> collection;
+
+        public ApiController(LiteDatabase db)
+        {
+            this.db = db;
+            this.collection = db.GetCollection<T>();
+        }
+
+        public async Task Get(HttpContext context)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.OK;
+            var items = collection.FindAll();
+
+            await context.Response.WriteJsonAsync(new
+            {
+                errors = new string[] { },
+                items = items
+            });
+        }
+
+        public async Task Get(HttpContext context, int id)
+        {
+            var response = collection.FindById(id);
+            if (response == null)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+
+                await context.Response.WriteJsonAsync(new
+                {
+                    items = new object[] { },
+                    errors = new string[] { }
+                });
+
+                return;
+            }
+
+            context.Response.StatusCode = (int)HttpStatusCode.OK;
+            await context.Response.WriteJsonAsync(new
+            {
+                items = new object[] { response },
+                errors = new string[] { }
+            });
+
+        }
+
+        public async Task Post(HttpContext context, T entity)
+        {
+            var result = collection.Insert(entity);
+
+            await context.Response.WriteJsonAsync(new
+            {
+                items = new object[] { collection.FindById(result) },
+                errors = new string[] { }
+            });
+
+        }
+
+        public async Task Put(HttpContext context, T entity)
+        {
+            var id = collection.Update(entity);
+            var response = collection.FindById(id);
+
+            await context.Response.WriteJsonAsync(new
+            {
+                items = new object[] { response },
+                errors = new string[] { }
+            });
+        }
+
+        public async Task Patch(HttpContext context, T entity) => throw new NotImplementedException();
+        public async Task Delete(HttpContext context, int id) => throw new NotImplementedException();
+    }
 
 }
 
@@ -61,7 +168,7 @@ namespace Dingil.Parsers
 
     public static class DingilYamlParser
     {
-        static IDeserializer Deserializer =  new DeserializerBuilder().Build();
+        static IDeserializer Deserializer = new DeserializerBuilder().Build();
         public static Dictionary<string, Dictionary<string, string>> ParseBasic(string content)
         {
             var result = Deserializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(content);
@@ -337,7 +444,7 @@ namespace Dingil
         }
 
         [Obsolete("", true)]
-        public IDingilBuilder CreateModule( bool emitSymbolInfo)
+        public IDingilBuilder CreateModule(bool emitSymbolInfo)
         {
             if (assemblyName.Length > 260) throw new ArgumentOutOfRangeException(nameof(assemblyName));
             this.moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
@@ -418,7 +525,7 @@ namespace Dingil
         IDingilBuilder InitializeAndCreateClass(string name, Dictionary<string, Type> properties);
         IDingilBuilder InitializeAndCreateClasses(Dictionary<string, Dictionary<string, string>> typeDefinitions);
         IDingilBuilder InitializeAndCreateClasses(Dictionary<string, Dictionary<string, Type>> typeDefinitions);
-        
+
         [Obsolete("Deprecated", true)]
         IDingilBuilder SaveAssembly();
 
