@@ -13,6 +13,7 @@ using Dingoz.Service;
 using System.Net;
 using System.Linq;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace Dingoz
 {
@@ -23,6 +24,10 @@ namespace Dingoz
 
         public static async Task Main(string[] args)
         {
+            var logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .CreateLogger();
+
             Parser.Default.ParseArguments<Options>(args)
                    .WithParsed(options =>
                    {
@@ -73,12 +78,16 @@ namespace Dingoz
 
                 string uri = $"/api/{@class.Name}";
 
+                logger.Information($"Registering URL | GET {uri}/{{id}} ");
                 app.MapGet(uri + "/{id}", (RequestDelegate)Delegate.CreateDelegate(requestDelegateType, instance, "GetById"));
 
+                logger.Information($"Registering URL | GET {uri}");
                 app.MapGet(uri, (RequestDelegate)Delegate.CreateDelegate(requestDelegateType, instance, "GetAll"));
 
+                logger.Information($"Registering URL | POST {uri}");
                 app.MapPost(uri, (RequestDelegate)Delegate.CreateDelegate(requestDelegateType, instance, "Post"));
 
+                logger.Information($"Registering URL | PUT {uri}/{{id}} ");
                 app.MapPut(uri + "/{id}", (RequestDelegate)Delegate.CreateDelegate(requestDelegateType, instance, "Put"));
             }
 
