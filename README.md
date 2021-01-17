@@ -1,5 +1,25 @@
 # dingil
 
+> Generates simple CRUD APIs whose models are defined with YAMLs
+
+
+## Example
+
+```yaml
+Project:
+    Id: System.Int32
+    Name: System.String
+
+Todo:
+    Id: System.Int32
+    Title: System.String
+```
+
+
+## TODOs
+- [ ] .NET type strings will be converted to non-developer strings like. Instead of `System.String`, `Text` is proposed.
+
+
 - https://gist.github.com/guneysus/e20508dcf3e0bf3bd8ebfbbeec09b912/raw/catalog.yml
 - https://gist.github.com/guneysus/e20508dcf3e0bf3bd8ebfbbeec09b912/raw/todo.yml
 - https://www.myget.org/feed/guneysu/package/nuget/Dingoz
